@@ -1,0 +1,12 @@
+
+subprojects {
+  apply plugin: 'c'
+
+  model {
+    buildTypes {
+      debug
+      release
+    }
+  }
+}
+

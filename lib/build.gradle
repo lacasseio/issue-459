@@ -1,0 +1,31 @@
+model {
+  components {
+    main(NativeLibrarySpec)
+  }
+  tasks {
+    $.buildTypes.each {buildType ->
+      $.binaries.withType(SharedLibraryBinarySpec).findAll{it.buildType == buildType}.each {binary ->
+        def binaryList = $.serviceRegistry
+            .get(org.gradle.api.internal.resolve.ProjectModelResolver)
+            .resolveProjectModel(":tool")
+            .realize("components.main", NativeExecutableSpec)
+            .binaries
+            .withType(NativeExecutableBinarySpec)
+            .findAll { it.buildType == binary.buildType }
+        assert 1 == binaryList.size()
+        def toolBinary = binaryList.get(0)
+
+        def taskName = "run_${binary.name.capitalize()}_ThroughToolIn${buildType.name.capitalize()}"
+        "$taskName"(Exec) {
+          dependsOn toolBinary
+          executable toolBinary.executable.file
+          args binary.sharedLibraryFile
+        }
+        named("assemble") {
+          dependsOn taskName
+        }
+      }
+    }
+  }
+}
+
